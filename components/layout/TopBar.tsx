@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -20,6 +20,155 @@ import {
  * 顯示在所有登入後的頁面
  */
 export function TopBar() {
+  return (
+    <Suspense fallback={<TopBarFallback />}>
+      <TopBarContent />
+    </Suspense>
+  )
+}
+
+/**
+ * TopBar 的載入狀態（不使用 searchParams）
+ */
+function TopBarFallback() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [streakCount, setStreakCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const response = await fetch('/api/auth/me')
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data.user)
+          setStreakCount(data.user?.streak_count || 0)
+        } else {
+          if (response.status === 401) {
+            router.push('/auth')
+          }
+        }
+      } catch (error) {
+        console.error('取得使用者資料失敗:', error)
+      }
+    }
+    fetchUser()
+  }, [router])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/auth')
+      router.refresh()
+    } catch (error) {
+      console.error('登出失敗:', error)
+    }
+  }
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-6">
+          <Link href="/lobby" className="flex items-center gap-2">
+            <div className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              VocabMaster
+            </div>
+          </Link>
+          <nav className="hidden md:flex items-center gap-1">
+            <Link
+              href="/lobby"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              儀表板
+            </Link>
+            <Link
+              href="/words"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <BookOpen className="h-4 w-4" />
+              我的單字庫
+            </Link>
+            <Link
+              href="/words?type=public"
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <Earth className="h-4 w-4" />
+              公開單字庫
+            </Link>
+          </nav>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+            onClick={() => router.push('/words?action=add')}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">新增</span>
+          </button>
+          {streakCount > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-md bg-accent text-accent-foreground text-sm font-medium">
+              <Flame className="h-4 w-4 text-orange-500" />
+              <span>{streakCount}</span>
+            </div>
+          )}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <span className="hidden md:inline text-sm font-medium">
+                {user?.email?.split('@')[0] || '使用者'}
+              </span>
+            </button>
+            {showUserMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowUserMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-md z-50">
+                  <div className="p-2">
+                    <div className="px-3 py-2 border-b">
+                      <p className="text-sm font-medium">{user?.email || '使用者'}</p>
+                      {user?.username && (
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                      )}
+                    </div>
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      設定
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors text-destructive"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      登出
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+/**
+ * TopBar 的主要內容（使用 searchParams）
+ */
+function TopBarContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()

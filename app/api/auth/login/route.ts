@@ -5,6 +5,9 @@ import { verifyPassword } from '@/lib/auth/password'
 import { loginFormSchema } from '@/lib/validations/auth'
 import { cookies } from 'next/headers'
 
+// 標記為動態路由（因為使用了 cookies）
+export const dynamic = 'force-dynamic'
+
 /**
  * 登入 API Route
  * POST /api/auth/login

@@ -3,6 +3,9 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin'
 import { verifyPassword, hashPassword } from '@/lib/auth/password'
 import { cookies } from 'next/headers'
 
+// 標記為動態路由（因為使用了 cookies）
+export const dynamic = 'force-dynamic'
+
 /**
  * 更新密碼
  * PUT /api/settings/password

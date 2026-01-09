@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase/admin'
 import { cookies } from 'next/headers'
 
+// 標記為動態路由（因為使用了 cookies）
+export const dynamic = 'force-dynamic'
+
 /**
  * 取得當前使用者資料
  * GET /api/auth/me

@@ -4,6 +4,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { hashPassword } from '@/lib/auth/password'
 import { signupFormSchema } from '@/lib/validations/auth'
 
+// 標記為動態路由（因為使用了 createServerSupabaseClient，內部使用 cookies）
+export const dynamic = 'force-dynamic'
+
 /**
  * 註冊 API Route
  * POST /api/auth/register

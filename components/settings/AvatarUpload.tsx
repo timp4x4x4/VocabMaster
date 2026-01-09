@@ -227,6 +227,7 @@ export function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUploadProp
         <div className="relative">
           <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
             {imageSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={imageSrc}
                 alt="頭像預覽"
@@ -318,6 +319,7 @@ export function AvatarUpload({ currentAvatar, onAvatarChange }: AvatarUploadProp
                     />
 
                     {/* 可拖動的圖片 */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       ref={imgRef}
                       alt="裁切預覽"

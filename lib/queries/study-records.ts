@@ -101,10 +101,10 @@ export async function getUserStudyStats(userId: string) {
   // 計算本週總學習單字數
   const weekWordsCount = weekRecords.reduce((sum, record) => sum + record.words_count, 0)
   
-  // 總學習單字數（從使用者表取得）
+  // 總學習單字數和連續天數（從使用者表取得）
   const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('total_words_learned')
+    .select('total_words_learned, streak_count')
     .eq('id', userId)
     .single()
 

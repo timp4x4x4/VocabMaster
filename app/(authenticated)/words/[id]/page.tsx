@@ -28,6 +28,7 @@ export default async function WordSetPage({ params }: WordSetPageProps) {
           words={words} 
           wordSetTitle={wordSet.title}
           wordSetDescription={wordSet.description}
+          wordSetId={wordSet.id}
         />
       </div>
     )

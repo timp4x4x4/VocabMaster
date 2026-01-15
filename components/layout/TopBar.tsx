@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -14,6 +16,16 @@ import {
   Settings,
   Earth
 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { wordSetFormSchema, type WordSetFormData } from '@/lib/validations/word-set'
 
 /**
  * 頂部導航欄
@@ -35,6 +47,50 @@ function TopBarFallback() {
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [streakCount, setStreakCount] = useState(0)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<WordSetFormData>({
+    resolver: zodResolver(wordSetFormSchema),
+    defaultValues: {
+      public: true,
+    },
+  })
+
+  const onSubmit = async (data: WordSetFormData) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/word-sets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        reset()
+        setIsDialogOpen(false)
+        // 導航到新建立的單字集
+        router.push(`/words/${result.wordSet.id}`)
+        router.refresh()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || '新增單字集失敗')
+      }
+    } catch (error) {
+      console.error('新增單字集失敗:', error)
+      alert('新增單字集失敗，請稍後再試')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchUser() {
@@ -102,7 +158,7 @@ function TopBarFallback() {
         <div className="flex items-center gap-4">
           <button
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-            onClick={() => router.push('/words?action=add')}
+            onClick={() => setIsDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">新增</span>
@@ -161,6 +217,123 @@ function TopBarFallback() {
           </div>
         </div>
       </div>
+
+      {/* 新增單字集對話框 */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>新增單字集</DialogTitle>
+            <DialogDescription>
+              建立一個新的單字集
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="title-fallback" className="text-sm font-medium">
+                標題 <span className="text-destructive">*</span>
+              </label>
+              <input
+                id="title-fallback"
+                {...register('title')}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="例如：TOEIC 核心單字"
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="description-fallback" className="text-sm font-medium">
+                描述（選填）
+              </label>
+              <textarea
+                id="description-fallback"
+                {...register('description')}
+                className="w-full px-3 py-2 border rounded-md"
+                rows={3}
+                placeholder="例如：包含 TOEIC 考試中最常用的核心單字"
+              />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="category-fallback" className="text-sm font-medium">
+                  分類（選填）
+                </label>
+                <input
+                  id="category-fallback"
+                  {...register('category')}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="例如：考試"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="difficulty-fallback" className="text-sm font-medium">
+                  難度（選填）
+                </label>
+                <select
+                  id="difficulty-fallback"
+                  {...register('difficulty')}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">選擇難度</option>
+                  <option value="beginner">初級</option>
+                  <option value="intermediate">中級</option>
+                  <option value="advanced">高級</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="tags-fallback" className="text-sm font-medium">
+                標籤（選填，用逗號分隔）
+              </label>
+              <input
+                id="tags-fallback"
+                {...register('tags', {
+                  setValueAs: (value: string) => {
+                    if (!value) return null
+                    return value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+                  }
+                })}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="例如：TOEIC, 考試, 單字"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="public-fallback"
+                {...register('public')}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="public-fallback" className="text-sm font-medium">
+                設為公開單字集
+              </label>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={isSubmitting}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? '新增中...' : '新增'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }
@@ -175,6 +348,50 @@ function TopBarContent() {
   const [user, setUser] = useState<any>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [streakCount, setStreakCount] = useState(0)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<WordSetFormData>({
+    resolver: zodResolver(wordSetFormSchema),
+    defaultValues: {
+      public: true,
+    },
+  })
+
+  const onSubmit = async (data: WordSetFormData) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/word-sets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        reset()
+        setIsDialogOpen(false)
+        // 導航到新建立的單字集
+        router.push(`/words/${result.wordSet.id}`)
+        router.refresh()
+      } else {
+        const errorData = await response.json()
+        alert(errorData.error || '新增單字集失敗')
+      }
+    } catch (error) {
+      console.error('新增單字集失敗:', error)
+      alert('新增單字集失敗，請稍後再試')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   // 取得使用者資料
   useEffect(() => {
@@ -287,7 +504,7 @@ function TopBarContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
-            onClick={() => router.push('/words?action=add')}
+            onClick={() => setIsDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">新增</span>
@@ -369,6 +586,123 @@ function TopBarContent() {
           </div>
         </div>
       </div>
+
+      {/* 新增單字集對話框 */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>新增單字集</DialogTitle>
+            <DialogDescription>
+              建立一個新的單字集
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="title-content" className="text-sm font-medium">
+                標題 <span className="text-destructive">*</span>
+              </label>
+              <input
+                id="title-content"
+                {...register('title')}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="例如：TOEIC 核心單字"
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="description-content" className="text-sm font-medium">
+                描述（選填）
+              </label>
+              <textarea
+                id="description-content"
+                {...register('description')}
+                className="w-full px-3 py-2 border rounded-md"
+                rows={3}
+                placeholder="例如：包含 TOEIC 考試中最常用的核心單字"
+              />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="category-content" className="text-sm font-medium">
+                  分類（選填）
+                </label>
+                <input
+                  id="category-content"
+                  {...register('category')}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="例如：考試"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="difficulty-content" className="text-sm font-medium">
+                  難度（選填）
+                </label>
+                <select
+                  id="difficulty-content"
+                  {...register('difficulty')}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">選擇難度</option>
+                  <option value="beginner">初級</option>
+                  <option value="intermediate">中級</option>
+                  <option value="advanced">高級</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="tags-content" className="text-sm font-medium">
+                標籤（選填，用逗號分隔）
+              </label>
+              <input
+                id="tags-content"
+                {...register('tags', {
+                  setValueAs: (value: string) => {
+                    if (!value) return null
+                    return value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+                  }
+                })}
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="例如：TOEIC, 考試, 單字"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="public-content"
+                {...register('public')}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="public-content" className="text-sm font-medium">
+                設為公開單字集
+              </label>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={isSubmitting}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? '新增中...' : '新增'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }

@@ -5,10 +5,12 @@ import { z } from 'zod'
  * 使用 Zod 進行表單驗證，可與 React Hook Form 整合
  */
 export const wordFormSchema = z.object({
-  word: z.string().min(1, '單字不能為空').max(100, '單字長度不能超過 100 個字元'),
-  definition: z.string().min(1, '定義不能為空').max(500, '定義長度不能超過 500 個字元'),
-  example: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  english: z.string().min(1, '英文單字不能為空').max(100, '英文單字長度不能超過 100 個字元'),
+  chinese: z.string().min(1, '中文翻譯不能為空').max(500, '中文翻譯長度不能超過 500 個字元'),
+  pronunciation: z.string().optional().nullable(),
+  example: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
+  word_set_id: z.string().min(1, '單字集 ID 不能為空'),
 })
 
 export type WordFormData = z.infer<typeof wordFormSchema>

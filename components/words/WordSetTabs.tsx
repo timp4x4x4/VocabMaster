@@ -23,13 +23,14 @@ interface WordSetTabsProps {
   words: Word[]
   wordSetTitle: string
   wordSetDescription?: string | null
+  wordSetId: string
 }
 
 /**
  * 單字集標籤頁組件
  * 管理答對/答錯計數狀態、歷史記錄和當前位置，確保在 Tab 切換時狀態保持
  */
-export function WordSetTabs({ words, wordSetTitle, wordSetDescription }: WordSetTabsProps) {
+export function WordSetTabs({ words, wordSetTitle, wordSetDescription, wordSetId }: WordSetTabsProps) {
   // 將計數狀態提升到這裡，確保在 Tab 切換時狀態保持
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
@@ -94,7 +95,7 @@ export function WordSetTabs({ words, wordSetTitle, wordSetDescription }: WordSet
       </TabsContent>
       
       <TabsContent value="list" className="mt-0">
-        <WordListView words={words} />
+        <WordListView words={words} wordSetId={wordSetId} />
       </TabsContent>
     </Tabs>
   )

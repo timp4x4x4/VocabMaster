@@ -49,34 +49,47 @@ export function WordForm() {
       className="space-y-4"
     >
       <div>
-        <label htmlFor="word" className="block text-sm font-medium mb-1">
-          單字
+        <label htmlFor="english" className="block text-sm font-medium mb-1">
+          英文單字 <span className="text-destructive">*</span>
         </label>
         <input
-          id="word"
-          {...register('word')}
+          id="english"
+          {...register('english')}
           className="w-full px-3 py-2 border rounded-md"
+          placeholder="例如：apple"
         />
-        {errors.word && (
-          <p className="text-sm text-destructive mt-1">{errors.word.message}</p>
+        {errors.english && (
+          <p className="text-sm text-destructive mt-1">{errors.english.message}</p>
         )}
       </div>
 
       <div>
-        <label htmlFor="definition" className="block text-sm font-medium mb-1">
-          定義
+        <label htmlFor="chinese" className="block text-sm font-medium mb-1">
+          中文翻譯 <span className="text-destructive">*</span>
         </label>
-        <textarea
-          id="definition"
-          {...register('definition')}
+        <input
+          id="chinese"
+          {...register('chinese')}
           className="w-full px-3 py-2 border rounded-md"
-          rows={3}
+          placeholder="例如：蘋果"
         />
-        {errors.definition && (
+        {errors.chinese && (
           <p className="text-sm text-destructive mt-1">
-            {errors.definition.message}
+            {errors.chinese.message}
           </p>
         )}
+      </div>
+
+      <div>
+        <label htmlFor="pronunciation" className="block text-sm font-medium mb-1">
+          發音（選填）
+        </label>
+        <input
+          id="pronunciation"
+          {...register('pronunciation')}
+          className="w-full px-3 py-2 border rounded-md"
+          placeholder="例如：æpl"
+        />
       </div>
 
       <div>
@@ -88,6 +101,19 @@ export function WordForm() {
           {...register('example')}
           className="w-full px-3 py-2 border rounded-md"
           rows={2}
+          placeholder="例如：I like to eat an apple every day."
+        />
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium mb-1">
+          分類（選填）
+        </label>
+        <input
+          id="category"
+          {...register('category')}
+          className="w-full px-3 py-2 border rounded-md"
+          placeholder="例如：食物"
         />
       </div>
 
